@@ -45,8 +45,9 @@ This is a sibling to other takes on the same brief, but intentionally its own th
 
 | | |
 |---|---|
-| Contract `AIJudge` | [`0xc6cbA50A1021820E988f59A6F30f133e8ec6bb6b`](https://explorer.ritualfoundation.org/address/0xc6cbA50A1021820E988f59A6F30f133e8ec6bb6b) |
-| Deploy tx | `0x2e5d2dc6872abbfbac0a1c174ea84ed9717bd825e77a180747275379484e98a7` |
+| Contract `AIJudge` (commit-reveal) | [`0xc6cbA50A1021820E988f59A6F30f133e8ec6bb6b`](https://explorer.ritualfoundation.org/address/0xc6cbA50A1021820E988f59A6F30f133e8ec6bb6b) |
+| Contract `SealedAIJudge` (advanced) | [`0xf69Ebb5220200d5E7CF44DA4bB2D381F0F67DD92`](https://explorer.ritualfoundation.org/address/0xf69Ebb5220200d5E7CF44DA4bB2D381F0F67DD92) |
+| Deploy tx (AIJudge) | `0x2e5d2dc6872abbfbac0a1c174ea84ed9717bd825e77a180747275379484e98a7` |
 | Deployer | `0x3220668033b77521124a8D7572bE2A311cB4af7f` |
 
 > ⚠️ Ritual reports `block.timestamp` in **milliseconds**, so all deadlines use millisecond timestamps.
@@ -55,11 +56,12 @@ This is a sibling to other takes on the same brief, but intentionally its own th
 
 ```
 .
-├── ARCHITECTURE.md                 # public/hidden · on/off-chain · advanced design
+├── ARCHITECTURE.md                 # public/hidden · on/off-chain · advanced (implemented)
 ├── hardhat/
 │   ├── contracts/AIJudge.sol       # commit-reveal + revealedCount + getSubmissionIndex
-│   └── test/AIJudge.ts             # 12 passing reveal-case tests
-└── web/                            # Vite + React SPA
+│   ├── contracts/SealedAIJudge.sol # advanced: ECIES-sealed submissions, no reveal phase
+│   └── test/                       # AIJudge.ts (12) + SealedAIJudge.ts (9) — 21 passing
+└── web/                            # Vite + React SPA  (lib/ritualSecrets.ts = ECIES client)
     ├── index.html · vite.config.ts
     └── src/
         ├── App.tsx                 # header · hero · lifecycle · compose
@@ -83,7 +85,7 @@ npm run build      # -> web/dist
 # contract tests (reveal cases)
 cd ../hardhat
 npm install
-npx hardhat test   # 12 passing
+npx hardhat test   # 21 passing (commit-reveal + sealed)
 ```
 
 Contract address is read from `VITE_CONTRACT_ADDRESS` (falls back to the deployed one above).

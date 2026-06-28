@@ -62,7 +62,11 @@ late-commit, duplicate-commit, premature-judge, and the index lookup).
 
 ---
 
-## 2. Design — Ritual-Native Hidden Submissions (advanced)
+## 2. Implemented — Ritual-Native Sealed Submissions (advanced)
+
+> **Deployed:** `SealedAIJudge` at [`0xf69Ebb5220200d5E7CF44DA4bB2D381F0F67DD92`](https://explorer.ritualfoundation.org/address/0xf69Ebb5220200d5E7CF44DA4bB2D381F0F67DD92)
+> on Ritual (chain 1979, tx `0x48d668c584787d5937a8731e2fa8971aefbefa14e2df2243dd901139da42539d`).
+> Client encryption: `web/src/lib/ritualSecrets.ts`. Tests: `hardhat/test/SealedAIJudge.ts` (9 passing).
 
 **Goal:** answers stay hidden *even from the chain* until judging — removing the public reveal
 phase entirely — using Ritual's TEE-backed execution.
@@ -90,6 +94,20 @@ public contract state.
    an attestation that the work ran in a genuine enclave.
 3. Plaintext is discarded inside the enclave; only the ranking leaves it.
 
+### In this repo
+
+| Step | Where |
+|---|---|
+| Entrant encrypts answer to the executor key (ECIES, 12-byte nonce) | `encryptAnswer()` in `ritualSecrets.ts` |
+| Ciphertext stored on-chain — no plaintext field exists | `SealedAIJudge.submitSealed(bountyId, ciphertext, signature)` |
+| Owner assembles the batched request (`encryptedSecrets`, `piiEnabled=true`) | `buildSealedJudgeInput()` in `ritualSecrets.ts` |
+| TEE decrypts, substitutes `{{ANSWER_<addr>}}`, judges once | `SealedAIJudge.judgeAll(bountyId, llmInput)` → LLM precompile `0x0802` |
+| Owner pays the winning entrant | `SealedAIJudge.finalizeWinner(bountyId, winnerIndex)` |
+
+The plaintext is wrapped as `{"ANSWER_<submitter>": answer}` and referenced by a
+`{{ANSWER_<submitter>}}` placeholder, so the enclave substitutes each answer into the
+single batched prompt. The ECIES encrypt → decrypt round-trip is verified against `eciesjs`.
+
 ### Trade-offs vs commit-reveal
 
 - **Upside:** no reveal step (no "forgot to reveal" losses), and answers never become public
@@ -97,5 +115,8 @@ public contract state.
 - **Cost:** a stronger trust assumption (TEE integrity + key management) and Ritual-specific
   encrypted-input tooling; a public reveal is simpler to audit.
 
-> This repository **implements** the commit-reveal track end-to-end (contract + tests +
-> frontend); the Ritual-native flow above is documented as a design.
+> Both tracks are **implemented and deployed**: commit-reveal (`AIJudge`) and Ritual-native
+> sealed submissions (`SealedAIJudge`), each with passing tests. The one part that depends on
+> live Ritual infrastructure is the in-enclave decryption + batched inference at `judgeAll`
+> time (a funded RitualWallet + a registered executor); the encryption, on-chain storage,
+> access control, and request encoding are exercised and verified here.

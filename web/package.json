@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
+    "eciesjs": "^0.4.15",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "viem": "^2.37.0",
