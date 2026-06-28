@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background:
+    radial-gradient(42rem 30rem at 92% -12%, rgba(245, 158, 11, 0.12), transparent 60%),
+    radial-gradient(36rem 28rem at -8% 8%, rgba(251, 146, 60, 0.06), transparent 55%),
+    #0c0a09;
+  background-attachment: fixed;
+  color: #f5f5f4;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fff;
+}
+
+@layer utilities {
+  .bg-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 0%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(70% 60% at 50% 0%, #000 30%, transparent 100%);
+  }
+}

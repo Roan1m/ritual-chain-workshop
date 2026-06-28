@@ -1,4 +1,19 @@
-
+# dependencies / build output
+node_modules/
+dist/
 /out/
 /cache/
+.vite/
+*.tsbuildinfo
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# macOS
 .DS_Store
+
+# logs
+*.log
+npm-debug.log*
