@@ -40,6 +40,37 @@ function describeError(err: unknown): string {
   if (/user rejected|denied|rejected the request/i.test(msg)) {
     return "Request rejected in wallet.";
   }
+  // Surface known contract revert reasons clearly.
+  const known = [
+    "submissions closed",
+    "reveal not open",
+    "reveal closed",
+    "reveal phase not over",
+    "reveal still open",
+    "no commitment",
+    "commitment mismatch",
+    "invalid reveal",
+    "already committed",
+    "already revealed",
+    "already judged",
+    "already finalized",
+    "not bounty owner",
+    "winner not revealed",
+    "no revealed",
+  ];
+  const low = msg.toLowerCase();
+  for (const k of known) {
+    if (low.includes(k)) return k.charAt(0).toUpperCase() + k.slice(1) + ".";
+  }
+  // A failed gas estimate (huge gas / block-limit) almost always means the tx
+  // would revert — translate the cryptic wallet message into a useful hint.
+  if (
+    /exceeds the limit allowed for the block|gas required exceeds|intrinsic gas|cannot estimate gas|unpredictable_gas|execution reverted/i.test(
+      msg,
+    )
+  ) {
+    return "This transaction would revert on-chain — check the phase/timing (deadline passed?) or that this wallet has a matching commitment.";
+  }
   // Keep it to the first line so we don't dump a stack into the UI.
   return msg.split("\n")[0];
 }

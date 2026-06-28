@@ -21,10 +21,9 @@ import {
 
 const explorerBase = ritualChain.blockExplorers?.default.url;
 
-/** Default datetime-local value = now + 1 hour, in the input's expected format. */
-function defaultDeadline(): string {
-  const d = new Date(Date.now() + 60 * 60 * 1000);
-  // Strip seconds/tz to YYYY-MM-DDTHH:mm in local time.
+/** datetime-local value = now + N minutes, in the input's expected format. */
+function defaultDeadline(minutesFromNow: number): string {
+  const d = new Date(Date.now() + minutesFromNow * 60 * 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
     d.getHours(),
@@ -35,11 +34,11 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
   const { isConnected } = useAccount();
   const [title, setTitle] = useState("");
   const [rubric, setRubric] = useState("");
-  const [deadline, setDeadline] = useState(defaultDeadline());
+  const [submissionDeadline, setSubmissionDeadline] = useState(defaultDeadline(10));
+  const [revealDeadline, setRevealDeadline] = useState(defaultDeadline(60));
   const [reward, setReward] = useState("");
   const [createdId, setCreatedId] = useState<bigint | null>(null);
 
-  // Once confirmed, pull the new bountyId out of the BountyCreated event log.
   const tx = useWriteTx((receipt) => {
     try {
       const logs = parseEventLogs({
@@ -57,13 +56,15 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
     }
   });
 
-  // Pure, render-safe validation (no clock reads here — see handleSubmit).
   const validation = useMemo(() => {
     if (!title.trim()) return "Title is required.";
     if (!rubric.trim()) return "Rubric is required.";
-    if (!deadline) return "Pick a deadline.";
-    const ts = new Date(deadline).getTime();
-    if (!Number.isFinite(ts)) return "Invalid deadline.";
+    if (!submissionDeadline) return "Pick a submission deadline.";
+    if (!revealDeadline) return "Pick a reveal deadline.";
+    const sub = new Date(submissionDeadline).getTime();
+    const rev = new Date(revealDeadline).getTime();
+    if (!Number.isFinite(sub) || !Number.isFinite(rev)) return "Invalid deadline.";
+    if (rev <= sub) return "Reveal deadline must be after the submission deadline.";
     if (reward !== "") {
       try {
         parseEther(reward);
@@ -72,21 +73,22 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
       }
     }
     return null;
-  }, [title, rubric, deadline, reward]);
+  }, [title, rubric, submissionDeadline, revealDeadline, reward]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (validation || !contractAddress) return;
 
-    const deadlineMs = new Date(deadline).getTime();
-    if (deadlineMs <= Date.now()) {
-      // Clock read belongs in the event handler, not render.
-      window.alert("Deadline must be in the future.");
+    const subMs = new Date(submissionDeadline).getTime();
+    const revMs = new Date(revealDeadline).getTime();
+    if (subMs <= Date.now()) {
+      window.alert("Submission deadline must be in the future.");
       return;
     }
 
-    const deadlineTs = BigInt(Math.floor(deadlineMs / 1000));
-    console.log("Creating bounty with", { title, rubric, deadlineTs, reward });
+    // Ritual block timestamps are in milliseconds.
+    const subTs = BigInt(subMs);
+    const revTs = BigInt(revMs);
     const value = reward.trim() === "" ? 0n : parseEther(reward.trim());
     setCreatedId(null);
 
@@ -95,7 +97,7 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
         address: contractAddress,
         abi: aiJudgeAbi,
         functionName: "createBounty",
-        args: [title.trim(), rubric.trim(), deadlineTs],
+        args: [title.trim(), rubric.trim(), subTs, revTs],
         value,
         chainId: ritualChain.id,
       });
@@ -108,7 +110,7 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
     <Card>
       <CardHeader
         title="Create a bounty"
-        subtitle="Fund a reward and define how submissions will be judged."
+        subtitle="Fund a reward, set the commit and reveal windows, and define how submissions are judged."
       />
       <CardBody>
         {!isContractConfigured && (
@@ -137,25 +139,64 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
             />
           </Field>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Deadline">
-              <Input
-                type="datetime-local"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
-            </Field>
-            <Field label="Reward (RITUAL)" hint="Locked in the contract on create.">
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                value={reward}
-                onChange={(e) => setReward(e.target.value)}
-                placeholder="1.0"
-              />
-            </Field>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
+            <div className="mb-2.5 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Commit
+              <span className="text-stone-600">→</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Reveal
+              <span className="text-stone-600">→</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Judge
+            </div>
+            <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+                Quick set
+              </span>
+              {[
+                { label: "Test · 10m / 1h", s: 10, r: 60 },
+                { label: "1h / 6h", s: 60, r: 360 },
+                { label: "1d / 3d", s: 1440, r: 4320 },
+              ].map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => {
+                    setSubmissionDeadline(defaultDeadline(p.s));
+                    setRevealDeadline(defaultDeadline(p.r));
+                  }}
+                  className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-stone-300 transition hover:bg-white/[0.08]"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Submission deadline" hint="Commit phase ends here.">
+                <Input
+                  type="datetime-local"
+                  value={submissionDeadline}
+                  onChange={(e) => setSubmissionDeadline(e.target.value)}
+                />
+              </Field>
+              <Field label="Reveal deadline" hint="Reveal phase ends here; judging follows.">
+                <Input
+                  type="datetime-local"
+                  value={revealDeadline}
+                  onChange={(e) => setRevealDeadline(e.target.value)}
+                />
+              </Field>
+            </div>
           </div>
+
+          <Field label="Reward (RITUAL)" hint="Locked in the contract on create.">
+            <Input
+              type="number"
+              min="0"
+              step="any"
+              value={reward}
+              onChange={(e) => setReward(e.target.value)}
+              placeholder="1.0"
+            />
+          </Field>
 
           {validation && (title || rubric || reward) ? (
             <p className="text-xs text-amber-300">{validation}</p>
@@ -170,7 +211,7 @@ export function CreateBountyForm({ onCreated }: { onCreated?: (bountyId: bigint)
           </Button>
 
           {!isConnected && (
-            <p className="text-xs text-zinc-500">Connect your wallet to create a bounty.</p>
+            <p className="text-xs text-stone-500">Connect your wallet to create a bounty.</p>
           )}
 
           <TxStatus state={tx.state} error={tx.error} hash={tx.hash} explorerBase={explorerBase} />

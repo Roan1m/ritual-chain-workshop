@@ -14,7 +14,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur shadow-xl shadow-black/20 ${className}`}
+      className={`relative overflow-hidden rounded-xl border border-stone-800 bg-stone-900/60 shadow-lg shadow-black/30 ${className}`}
     >
       {children}
     </div>
@@ -31,14 +31,17 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
-      <div className="min-w-0">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-300">
-          {title}
-        </h2>
-        {subtitle ? (
-          <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p>
-        ) : null}
+    <div className="flex items-start justify-between gap-3 border-b border-stone-800 px-5 py-4">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="mt-0.5 h-4 w-0.5 shrink-0 bg-amber-400" />
+        <div className="min-w-0">
+          <h2 className="font-display text-[15px] font-semibold tracking-tight text-stone-100">
+            {title}
+          </h2>
+          {subtitle ? (
+            <p className="mt-1 text-xs leading-relaxed text-stone-400">{subtitle}</p>
+          ) : null}
+        </div>
       </div>
       {action}
     </div>
@@ -57,13 +60,16 @@ export function CardBody({
 
 /* ----------------------------------------------------------------- Badge */
 
-type Tone = "green" | "amber" | "indigo" | "zinc" | "red";
+type Tone = "green" | "amber" | "indigo" | "violet" | "cyan" | "zinc" | "red";
 
 const TONES: Record<Tone, string> = {
   green: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
-  amber: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
-  indigo: "bg-indigo-500/15 text-indigo-300 ring-indigo-500/30",
-  zinc: "bg-zinc-500/15 text-zinc-300 ring-zinc-500/30",
+  amber: "bg-amber-500/15 text-amber-200 ring-amber-500/30",
+  // legacy keys remapped to the Obscura palette
+  indigo: "bg-amber-500/15 text-amber-200 ring-amber-500/30",
+  violet: "bg-amber-500/15 text-amber-200 ring-amber-500/30",
+  cyan: "bg-orange-500/15 text-orange-200 ring-orange-500/30",
+  zinc: "bg-stone-500/15 text-stone-300 ring-stone-500/30",
   red: "bg-red-500/15 text-red-300 ring-red-500/30",
 };
 
@@ -76,11 +82,26 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[tone]}`}
+      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${TONES[tone]}`}
     >
       {children}
     </span>
   );
+}
+
+/* ------------------------------------------------------------------- Dot */
+
+export function Dot({ tone = "amber" }: { tone?: Tone }) {
+  const color: Record<Tone, string> = {
+    green: "bg-emerald-400",
+    amber: "bg-amber-400",
+    indigo: "bg-amber-400",
+    violet: "bg-amber-400",
+    cyan: "bg-orange-400",
+    zinc: "bg-stone-400",
+    red: "bg-red-400",
+  };
+  return <span className={`inline-block h-2 w-2 rounded-full ${color[tone]}`} />;
 }
 
 /* ---------------------------------------------------------------- Button */
@@ -95,18 +116,17 @@ export function Button({
   children,
   ...rest
 }: ButtonProps) {
+  const base =
+    "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-50";
   const styles: Record<string, string> = {
     primary:
-      "bg-indigo-500 text-white hover:bg-indigo-400 disabled:bg-indigo-500/40",
+      "bg-amber-500 text-stone-950 hover:bg-amber-400 ring-1 ring-inset ring-amber-300/40 active:translate-y-px",
     secondary:
-      "bg-white/10 text-zinc-100 hover:bg-white/15 disabled:bg-white/5",
-    ghost: "bg-transparent text-zinc-300 hover:bg-white/5",
+      "bg-stone-800 text-stone-100 ring-1 ring-inset ring-stone-700 hover:bg-stone-700 active:translate-y-px",
+    ghost: "text-stone-300 hover:bg-stone-800/60 hover:text-stone-100",
   };
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:text-zinc-400 ${styles[variant]} ${className}`}
-      {...rest}
-    >
+    <button className={`${base} ${styles[variant]} ${className}`} {...rest}>
       {children}
     </button>
   );
@@ -125,30 +145,25 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-zinc-400">
+      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-stone-400">
         {label}
       </span>
       {children}
-      {hint ? <span className="mt-1 block text-xs text-zinc-600">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-xs text-stone-500">{hint}</span> : null}
     </label>
   );
 }
 
 const inputBase =
-  "w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-indigo-400/60 focus:outline-none focus:ring-1 focus:ring-indigo-400/40";
+  "w-full rounded-lg border border-stone-700 bg-stone-950/60 px-3.5 py-2.5 text-sm text-stone-100 transition placeholder:text-stone-600 focus:border-amber-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={`${inputBase} ${props.className ?? ""}`} />;
 }
 
-export function Textarea(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-) {
+export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <textarea
-      {...props}
-      className={`${inputBase} resize-y ${props.className ?? ""}`}
-    />
+    <textarea {...props} className={`${inputBase} resize-y leading-relaxed ${props.className ?? ""}`} />
   );
 }
 
@@ -165,7 +180,7 @@ const TX_LABEL: Record<TxState, string> = {
 const TX_TONE: Record<TxState, Tone> = {
   idle: "zinc",
   wallet: "amber",
-  pending: "indigo",
+  pending: "amber",
   confirmed: "green",
   failed: "red",
 };
@@ -193,7 +208,7 @@ export function TxStatus({
           href={`${explorerBase}/tx/${hash}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+          className="text-amber-300 underline underline-offset-2 hover:text-amber-200"
         >
           View tx
         </a>
@@ -216,9 +231,7 @@ export function Notice({
   children: ReactNode;
 }) {
   return (
-    <div
-      className={`rounded-xl px-3 py-2 text-xs ring-1 ring-inset ${TONES[tone]}`}
-    >
+    <div className={`rounded-lg px-3.5 py-2.5 text-xs leading-relaxed ring-1 ring-inset ${TONES[tone]}`}>
       {children}
     </div>
   );
@@ -226,13 +239,11 @@ export function Notice({
 
 export function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-xl bg-black/20 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+    <div className="rounded-lg border border-stone-800 bg-stone-950/50 px-3.5 py-2.5">
+      <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500">
         {label}
       </div>
-      <div className="mt-0.5 text-sm font-medium text-zinc-100 break-words">
-        {value}
-      </div>
+      <div className="mt-1 break-words text-sm font-medium text-stone-100">{value}</div>
     </div>
   );
 }

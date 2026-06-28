@@ -59,11 +59,11 @@ export function LoadBountyPanel({
           <Button type="submit">Load</Button>
         </form>
 
-        {recentIds.length > 0 && (
-          <div>
-            <div className="mb-1 text-[11px] uppercase tracking-wide text-zinc-500">
-              Recent
-            </div>
+        <div>
+          <div className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Recent bounties
+          </div>
+          {recentIds.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {recentIds.map((id) => (
                 <button
@@ -72,18 +72,22 @@ export function LoadBountyPanel({
                     setOverride(null);
                     load(id);
                   }}
-                  className={`rounded-lg px-2 py-1 font-mono text-xs ring-1 ring-inset transition-colors ${
+                  className={`rounded-lg px-2.5 py-1 font-mono text-xs ring-1 ring-inset transition-colors ${
                     selectedId?.toString() === id
-                      ? "bg-indigo-500/20 text-indigo-200 ring-indigo-500/40"
-                      : "bg-black/20 text-zinc-300 ring-white/10 hover:bg-white/10"
+                      ? "bg-amber-500/20 text-amber-200 ring-amber-500/40"
+                      : "bg-white/[0.03] text-stone-300 ring-white/10 hover:bg-white/[0.08]"
                   }`}
                 >
                   #{id}
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-stone-600">
+              No bounties opened yet — create one, or load any by its id.
+            </p>
+          )}
+        </div>
       </CardBody>
     </Card>
   );

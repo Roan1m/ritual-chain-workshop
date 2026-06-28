@@ -16,7 +16,7 @@ export function BountyDetail({
   isOwner: boolean;
 }) {
   const now = useNow();
-  const status = getBountyStatus(bounty, now / 1000);
+  const status = getBountyStatus(bounty, now);
   const meta = STATUS_META[status];
 
   return (
@@ -24,8 +24,8 @@ export function BountyDetail({
       <CardHeader
         title={
           <span className="flex items-center gap-2">
-            <span className="font-mono text-zinc-500">#{bountyId.toString()}</span>
-            <span className="normal-case text-base text-zinc-100">
+            <span className="font-mono text-stone-500">#{bountyId.toString()}</span>
+            <span className="normal-case text-base text-stone-100">
               {bounty.title || "Untitled"}
             </span>
           </span>
@@ -39,8 +39,8 @@ export function BountyDetail({
       />
       <CardBody className="space-y-4">
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-zinc-500">Rubric</div>
-          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-zinc-200">
+          <div className="text-[11px] uppercase tracking-wide text-stone-500">Rubric</div>
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-stone-200">
             {bounty.rubric || "-"}
           </p>
         </div>
@@ -49,12 +49,23 @@ export function BountyDetail({
           <Stat label="Reward" value={formatReward(bounty.reward)} />
           <Stat label="Submissions" value={bounty.submissionCount.toString()} />
           <Stat
-            label="Deadline"
+            label="Commit until"
             value={
               <span>
-                {formatTimestamp(bounty.deadline)}
-                <span className="ml-1 text-xs text-zinc-500">
-                  ({formatRelative(bounty.deadline)})
+                {formatTimestamp(bounty.submissionDeadline)}
+                <span className="ml-1 text-xs text-stone-500">
+                  ({formatRelative(bounty.submissionDeadline)})
+                </span>
+              </span>
+            }
+          />
+          <Stat
+            label="Reveal until"
+            value={
+              <span>
+                {formatTimestamp(bounty.revealDeadline)}
+                <span className="ml-1 text-xs text-stone-500">
+                  ({formatRelative(bounty.revealDeadline)})
                 </span>
               </span>
             }
