@@ -55,7 +55,10 @@ This is a sibling to other takes on the same brief, but intentionally its own th
 
 ```
 .
-├── hardhat/contracts/AIJudge.sol   # commit-reveal + revealedCount + getSubmissionIndex
+├── ARCHITECTURE.md                 # public/hidden · on/off-chain · advanced design
+├── hardhat/
+│   ├── contracts/AIJudge.sol       # commit-reveal + revealedCount + getSubmissionIndex
+│   └── test/AIJudge.ts             # 12 passing reveal-case tests
 └── web/                            # Vite + React SPA
     ├── index.html · vite.config.ts
     └── src/
@@ -76,9 +79,15 @@ npm run dev        # http://localhost:5173
 
 # build the static site
 npm run build      # -> web/dist
+
+# contract tests (reveal cases)
+cd ../hardhat
+npm install
+npx hardhat test   # 12 passing
 ```
 
 Contract address is read from `VITE_CONTRACT_ADDRESS` (falls back to the deployed one above).
+See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for the public/hidden + on-chain/off-chain breakdown and the advanced Ritual-native design.
 
 ## Design notes
 
@@ -89,7 +98,7 @@ Contract address is read from `VITE_CONTRACT_ADDRESS` (falls back to the deploye
 
 ## Reflection — public vs hidden, AI vs human
 
-The rules are public — prompt, rubric, deadlines, reward, and each commitment hash — so the contest is auditable. Each answer stays hidden during the submission window so no one can copy an earlier entry, then becomes public on reveal. The AI does the first pass, scoring every revealed answer against the rubric in one batch; a human keeps the final say — ratifying the winner and releasing the reward — because rubrics are interpretive and accountability for real money should rest with a person. The chain enforces fairness and timing, the AI recommends, and a human decides.
+*What should be public?* The rules of the game — prompt, rubric, deadlines, and reward — together with every submission's commitment hash, so anyone can audit that the contest was fair and that no entry was altered after the fact. *What should stay hidden?* The answer text during the submission window, because publishing it early lets latecomers copy and out-do earlier entries — the exact flaw this system removes. Once the window closes, answers are revealed and become public, so the judging itself stays transparent and re-checkable. *AI vs human?* The AI is well suited to the first pass: it reads every revealed answer against the rubric and ranks them in a single batch, quickly and without favouritism. But rubrics are interpretive and real money is at stake, so a human owner keeps the final say — ratifying the AI's recommendation and releasing the reward. In short, the chain enforces timing and fairness, the AI recommends, and a human is accountable for the decision. That separation of duties is what keeps the process both automated and trustworthy.
 
 ---
 
